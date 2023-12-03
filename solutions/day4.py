@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import List
 from itertools import chain
+from functools import lru_cache
 
 prefix = re.compile(r"Card (\d)+:")
 
@@ -16,6 +17,13 @@ class Card:
             return 2**(self.matches-1)
         else:
             return 0
+    
+    def __hash__(self) -> int:
+        return self.id
+
+    def __eq__(self, other: object) -> bool:
+        return self.id == other.id
+    
 
 class Day4(Puzzle):
     
@@ -23,9 +31,9 @@ class Day4(Puzzle):
 
     cards : List[Card] = []
 
-    def part1(self):
+    def __init__(self, data=None):
+        super().__init__(data)
         line: str
-        points = 0
         for id, line in enumerate(self.data):
             line = line.split(":")[1]
             winners, mine = line.split("|")
@@ -38,12 +46,16 @@ class Day4(Puzzle):
                 if n in mine:
                     matches += 1
             self.cards.append(Card(id+1, matches))
-        
+
+
+    def part1(self):
+        points = 0
         for c in self.cards:
             points += c.points()
         
         return points
     
+    @lru_cache(maxsize=205)
     def _winning_scratchers(self, c: Card) -> List[Card]:
         if c.matches > 0:
             new_cards = self.cards[c.id:c.id+c.matches]
@@ -53,8 +65,6 @@ class Day4(Puzzle):
             
     
     def part2(self):
-        if len(self.cards) == 0:
-            self.part1()
         for c in self.cards:
             self.cards = self.cards + self._winning_scratchers(c)
 
