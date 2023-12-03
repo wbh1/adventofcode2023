@@ -19,6 +19,5 @@ def test_part1():
     assert r == 4361
 
 def test_part2():
-    d.part1()
     r = d.part2()
     assert r == 467835

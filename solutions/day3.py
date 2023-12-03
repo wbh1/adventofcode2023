@@ -8,11 +8,13 @@ import re
 DR = [0, 0, -1, 1, -1, -1, 1, 1]
 DC = [1, -1, 0, 0, -1, 1, -1, 1]
 
+
 class Day3(Puzzle):
     day = 3
     symbol_regex = re.compile(r"([^\w\.\n])")
     part_numbers = []
     gears = defaultdict(lambda: [])
+
     def part1(self):
         number_regex = re.compile(r"(\d+)")
         for ri, row in enumerate(self.data):
@@ -21,7 +23,7 @@ class Day3(Puzzle):
                 counted = False
                 adj_gears = set()
                 for p in points:
-                    if symbols := self.should_count(p):
+                    if symbols := self.adjacent_symbols(p):
                         if symbols:
                             if not counted:
                                 self.part_numbers.append(int(number.group(0)))
@@ -31,21 +33,21 @@ class Day3(Puzzle):
                                     adj_gears.add(s[1])
                 for g in adj_gears:
                     self.gears[g].append(int(number.group(0)))
-                        
+
         return sum(self.part_numbers)
-    
+
     def part2(self):
+        if len(self.gears) == 0:
+            self.part1()
         gear_ratios = []
         for adj_nums in self.gears.values():
             if len(adj_nums) > 2 or len(adj_nums) < 2:
-                continue 
+                continue
             gear_ratios.append(adj_nums[0] * adj_nums[1])
         return sum(gear_ratios)
 
-
-    
     # Modified based on day15 2021
-    def should_count(self, point: tuple) -> bool:
+    def adjacent_symbols(self, point: tuple) -> bool:
         x, y = point
         adj_symbols = []
         for i in range(0, 8):
