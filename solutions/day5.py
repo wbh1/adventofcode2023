@@ -69,9 +69,21 @@ class Day5(Puzzle):
         return min([s.location for s in self.seeds])
 
     def part2(self) -> int:
-        for loc in range(0, 12634634):
-            seed = Seed.loc_to_seed(loc)
-            for start, length in zip(self.seeds[::2], self.seeds[1::2]):
-                if start.number <= seed < (start.number + length.number):
-                    return loc
-        return 0
+        from multiprocessing import Process, Pipe
+        from multiprocessing.connection import Connection
+        def run(s, e, c: Connection):
+            for loc in range(s, e):
+                if c.closed:
+                    return
+                seed = Seed.loc_to_seed(loc)
+                for start, length in zip(self.seeds[::2], self.seeds[1::2]):
+                    if start.number <= seed < (start.number + length.number):
+                        c.send(loc)
+                        c.close()
+        
+        p, c = Pipe()
+        for loc in range(0, 12634634, 1000000):
+            Process(target=run, args=(loc, loc + 1000000, c)).start()
+        answer = p.recv()
+        p.close()
+        return answer
