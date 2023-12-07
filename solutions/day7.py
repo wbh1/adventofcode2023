@@ -5,8 +5,8 @@ from collections import Counter
 HandType = IntEnum(
     "HandType", ["Five", "Four", "Full", "Three", "TwoPair", "OnePair", "HighCard"]
 )
-possible_cards = "AKQJT98765432"[::-1]
-possible_cards_jokers = "AKQT98765432J"[::-1]
+possible_cards = "AKQJT98765432"
+possible_cards_jokers = "AKQT98765432J"
 
 
 class Hand:
@@ -16,18 +16,17 @@ class Hand:
         self.jokers = jokers_enabled
         self.hand = self.outcome()
 
-    def outcome(self, cards=None) -> HandType:
-        if not cards:
-            cards = self.cards
+    def outcome(self) -> HandType:
+        cards = self.cards
         c = Counter(cards)
-        mc = c.most_common(2)
-        if self.jokers and 'J' in cards:
-            joker_count = c.get('J', 0)
-            joker_removed = cards.replace('J', '')
-            if joker_removed:
-                c = Counter(joker_removed)
+        if self.jokers and "J" in cards:
+            joker_count = c.get("J", 0)
+            # Don't delete the joker count if we only have jokers
+            if joker_count < 5:
+                del c["J"]
+                # Add number of jokers to the most common card type
                 c.update({c.most_common(1)[0][0]: joker_count})
-                mc = c.most_common(2)
+        mc = c.most_common(2)
         if mc[0][1] == 5:
             return HandType.Five
         elif mc[0][1] == 4:
@@ -47,7 +46,7 @@ class Hand:
         if other.hand == self.hand and other.cards == self.cards:
             return True
         return False
-    
+
     def __lt__(self, other: object) -> bool:
         card_rank = possible_cards
         if self.jokers:
@@ -55,7 +54,7 @@ class Hand:
         if self.hand == other.hand:
             for c in zip(self.cards, other.cards):
                 if c[0] != c[1]:
-                    return card_rank.index(c[0]) > card_rank.index(c[1])
+                    return card_rank.index(c[0]) < card_rank.index(c[1])
         else:
             return self.hand < other.hand
 
@@ -71,12 +70,13 @@ class Day7(Puzzle):
             self.hands.append(Hand(x[0], int(x[1])))
 
     def part1(self) -> int:
-        return sum([h.bid * rank for rank, h in enumerate(sorted(self.hands, reverse=True), 1)])
+        return sum(
+            [h.bid * rank for rank, h in enumerate(sorted(self.hands, reverse=True), 1)]
+        )
 
     def part2(self) -> int:
-        self.hands = []
-        for line in self.data:
-            x = line.split(" ")
-            self.hands.append(Hand(x[0], int(x[1]), jokers_enabled=True))
-        self.hands = sorted(self.hands, reverse=True)
+        self.hands = sorted(
+            [Hand(h.cards, h.bid, jokers_enabled=True) for h in self.hands],
+            reverse=True,
+        )
         return sum([h.bid * rank for rank, h in enumerate(self.hands, 1)])
