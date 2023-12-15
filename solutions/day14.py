@@ -37,8 +37,6 @@ class Day14(Puzzle):
         return rotated
 
     def cycle(self, times=1, exp=[]) -> List[str]:
-        # self.current = self.move()
-        max = 100
         tilts = 0
         cycles = 0
         memory = {"".join(self.current): 1}
